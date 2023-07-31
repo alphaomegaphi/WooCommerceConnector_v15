@@ -555,12 +555,19 @@ def sync_item_image(item):
     }
 
     if item.image:
-        img_details = frappe.db.get_value("File", {"file_url": item.image}, ["file_name", "file_url", "is_private", "content_hash"])
+        #img_details = frappe.db.get_value("File", {"file_url": item.image}, ["file_name", "file_url", "is_private", "content_hash"])
 
-        image_info["images"][0]["src"] = 'https://' + cstr(frappe.local.site) + img_details[1]
-        image_info["images"][0]["position"] = 0
+        #image_info["images"][0]["src"] = 'https://' + cstr(frappe.local.site) + img_details[1]
+        #image_info["images"][0]["position"] = 0
 
-        post_request("products/{0}".format(item.woocommerce_product_id), image_info)
+        extra_image_list = frappe.db.get_values("File", {"attached_to_name": item.name}, ["file_name", "file_url", "is_private", "content_hash", "docstatus"])
+        if extra_image_list:
+            for idx, img_details in enumerate(image_list, start=0):
+                image_info["images"][idx]["src"] = 'https://' + cstr(frappe.local.site) + img_details[1]
+                image_info["images"][idx]["position"] = idx
+
+
+            post_request("products/{0}".format(item.woocommerce_product_id), image_info)
 
 
 def validate_image_url(url):
