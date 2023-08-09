@@ -175,6 +175,8 @@ def get_woocommerce_items(ignore_filter_conditions=False):
     filter_condition = ''
     if not ignore_filter_conditions:
         filter_condition = get_filtering_condition()
+        print("WooCommerce filter error {0}".format(filter_condition))
+
         if cint(frappe.get_value("WooCommerce Config", "WooCommerce Config", "sync_only_published")) == 1:
             filter_condition += "&status=publish"
 
@@ -240,3 +242,8 @@ def get_woocommerce_customers(ignore_filter_conditions=False):
             woocommerce_customers.extend(response.json())
 
     return woocommerce_customers
+
+def get_woocommerce_all_product_categories():
+    return get_request("products/categories")
+
+

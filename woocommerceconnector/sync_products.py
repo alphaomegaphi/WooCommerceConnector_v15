@@ -185,7 +185,7 @@ def create_item_variants(woocommerce_item, warehouse, attributes, woocommerce_va
             woocommerce_item_variant = {
                 "id" : variant.get("id"),
                 "woocommerce_variant_id" : variant.get("id"),
-                "name": woocommerce_item.get("name"),
+                "name": woocommerce_item.get("item_code"),
                 "item_code":  str(variant.get("id")), # + " " + woocommerce_item.get("name"),
                 "title": variant.get("name"),
                 "item_group": get_item_group(woocommerce_item.get("")),
@@ -471,11 +471,15 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
     variant_item_name_list = []
     variant_list = []
     item_data = {
-            "name": item.get("item_name"),
+            "name": item.get("item_code"),
             "description": item.get("woocommerce_description") or item.get("web_long_description") or item.get("description"),
             "short_description": item.get("description") or item.get("web_long_description") or item.get("woocommerce_description"),
     }
     item_data.update( get_price_and_stock_details(item, warehouse, price_list) )
+
+    erpnext_categories = frappe.db.sql("""SELECT `category` FROM `tabItem Product Category` WHERE `parent` = '{item_code}'""".format(item_code=woocommerce_item.name), as_list=True)
+    for category in erpnext_categories:
+        categories.append({'category': category[0]})
 
     if item.get("has_variants"):  # we are dealing a variable product
         item_data["type"] = "variable"
@@ -609,7 +613,7 @@ def get_variant_attributes(item, price_list, warehouse):
         item_variant = frappe.get_doc("Item", variant.get("name"))
 
         data = (get_price_and_stock_details(item_variant, warehouse, price_list))
-        data["item_name"] = item_variant.name
+        data["item_name"] = item_variant.item_code
         data["attributes"] = []
         for attr in item_variant.get('attributes'):
             attribute_option = {}
