@@ -457,7 +457,7 @@ def get_erpnext_items(price_list):
           AND `tabItem`.`name` = `tabItem Price`.`item_code`
           AND `tabItem`.`sync_with_woocommerce` = 1 
           AND (`tabItem`.`disabled` IS NULL OR `tabItem`.`disabled` = 0) %s""" %(price_list, item_price_condition)
-    frappe.log_error("{0}".format(item_from_item_price))
+    frappe.log("{0}".format(item_from_item_price))
 
 
 
@@ -551,23 +551,25 @@ def create_new_item_to_woocommerce(item, item_data, erp_item, variant_item_name_
 
 def sync_item_image(item):
     image_info = {
-        "images": [{}]
+        "images": []
     }
 
-    if item.image:
+    # if item.image:
         #img_details = frappe.db.get_value("File", {"file_url": item.image}, ["file_name", "file_url", "is_private", "content_hash"])
 
         #image_info["images"][0]["src"] = 'https://' + cstr(frappe.local.site) + img_details[1]
         #image_info["images"][0]["position"] = 0
 
-        extra_image_list = frappe.db.get_values("File", {"attached_to_name": item.name}, ["file_name", "file_url", "is_private", "content_hash", "docstatus"])
-        if extra_image_list:
-            for idx, img_details in enumerate(image_list, start=0):
-                image_info["images"][idx]["src"] = 'https://' + cstr(frappe.local.site) + img_details[1]
-                image_info["images"][idx]["position"] = idx
+    extra_image_list = frappe.db.get_values("File", {"attached_to_name": item.name}, ["file_name", "file_url", "is_private", "content_hash", "docstatus"])
+    if extra_image_list:
+        for idx, img_details in enumerate(extra_image_list, start=0):
+            image_info["images"].append(
+                dict(src = 'https://' + cstr(frappe.local.site) + img_details[1], position = idx)
+            )
 
 
-            post_request("products/{0}".format(item.woocommerce_product_id), image_info)
+        frappe.log(f"Uploading an image list of {len(img_details)} images. {image_info=}")
+        post_request("products/{0}".format(item.woocommerce_product_id), image_info)
 
 
 def validate_image_url(url):
@@ -783,6 +785,7 @@ def update_item_stock(item_code, woocommerce_settings, bin=None, force=False):
                     item_data, resource = get_product_update_dict_and_resource(item.woocommerce_product_id, actual_qty=qty)
                 try:
 					#make_woocommerce_log(title="Update stock of {0}".format(item.barcode), status="Started", method="update_item_stock", message="Resource: {0}, data: {1}".format(resource, item_data))
+                    make_woocommerce_log(title="About to sync", status="Queued", method="update_item_stock", message=f"About to upload to {resource=}", request_data=item_data)
                     put_request(resource, item_data)
                 except requests.exceptions.HTTPError as e:
                     if e.args[0] and e.args[0].startswith("404"):

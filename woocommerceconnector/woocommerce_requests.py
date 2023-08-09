@@ -80,10 +80,16 @@ def post_request(path, data):
         )
         
         r = wcapi.post(path, data)
-        
+        make_woocommerce_log(title="WooCommerce post. Resp Code: ".format(r.status_code), 
+            status="", 
+            method="post_post_request", 
+            message="{0}: {1}".format(r.url, r.json()),
+            request_data=data, 
+            exception=False)
+    
         #r.raise_for_status()
         # manually raise for status to get more info from error (message details)
-        if r.status_code != requests.codes.ok:
+        if r.status_code >= 400:
             make_woocommerce_log(title="WooCommerce post error {0}".format(r.status_code), 
                 status="Error", 
                 method="post_request", 
