@@ -304,7 +304,7 @@ def get_woocommerce_customers(ignore_filter_conditions=False):
 def get_woocommerce_all_product_categories():
     response = get_request("products/categories")
     make_woocommerce_log(
-        title="WooCommerce get_woocommerce_all_product_categories. Resp Code: {0}".format(r.status_code),
+        title="WooCommerce get_woocommerce_all_product_categories. Resp Code: {0}".format(response.status_code),
         status="",
         method="get_woocommerce_all_product_categories",
         message="Fetch all product categories",
