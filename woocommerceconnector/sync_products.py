@@ -682,6 +682,16 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
     # get a dict of category name <> category id from WooCommerce
     woo_categories_dict = get_woocommerce_all_product_categories()
     item_category_name = item.get("item_group")
+    make_woocommerce_log(
+        title="WooCommerce categories comparison",
+        status="",
+        method="compare_categroies",
+        message="Checking %s in %s. Origin: %s" % (item_category_name, woo_categories_dict, erpnext_categories_dict),
+        request_data=dict(erpnext_categories_dict=erpnext_categories_dict, woo_categories_dict=woo_categories_dict, item_category_name=item_category_name),
+        exception=False,
+    )
+
+ 
     if item_category_name:
         # Create an empty holder of all item categories
         item_data["categories"] = []

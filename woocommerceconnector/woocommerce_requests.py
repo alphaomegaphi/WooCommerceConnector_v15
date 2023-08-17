@@ -90,7 +90,7 @@ def post_request(path, data):
 
     r = wcapi.post(path, data)
     make_woocommerce_log(
-        title="WooCommerce post. Resp Code: ".format(r.status_code),
+        title="WooCommerce post. Resp Code: {0}".format(r.status_code),
         status="",
         method="post_post_request",
         message="{0}: {1}".format(r.url, r.json()),
