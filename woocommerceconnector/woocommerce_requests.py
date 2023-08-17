@@ -301,16 +301,37 @@ def get_woocommerce_customers(ignore_filter_conditions=False):
     return woocommerce_customers
 
 
+#def get_woocommerce_all_product_categories():
+#    response = get_request("products/categories")
+#    make_woocommerce_log(
+#        title="WooCommerce get_woocommerce_all_product_categories. Resp Code: {0}".format(response.status_code),
+#        status="",
+#        method="get_woocommerce_all_product_categories",
+#        message="Fetch all product categories",
+#        request_data=response,
+#        exception=False,
+#    )
+#
+#
+#    return dict([(item.get("name"), item.get("id")) for item in response])
+
 def get_woocommerce_all_product_categories():
-    response = get_request("products/categories")
-    make_woocommerce_log(
-        title="WooCommerce get_woocommerce_all_product_categories. Resp Code: {0}".format(response.status_code),
-        status="",
-        method="get_woocommerce_all_product_categories",
-        message="Fetch all product categories",
-        request_data=response,
-        exception=False,
+    woocommerce_products = []
+    _per_page = 100
+
+    response = get_request_request(
+        "products/categories?per_page={0}".format(_per_page)
     )
+    woocommerce_products.extend([(item.get("name"), item.get("id")) for item in response.json()])
+
+    for page_idx in range(1, int(response.headers.get("X-WP-TotalPages")) or 1):
+        response = get_request_request(
+            "products?per_page={0}&page={1}".format(
+                _per_page, page_idx + 1
+            )
+        )
+        woocommerce_products.extend([(item.get("name"), item.get("id")) for item in response.json()])
+
+    return dict(woocommerce_products)
 
 
-    return dict([(item.get("name"), item.get("id")) for item in response])
