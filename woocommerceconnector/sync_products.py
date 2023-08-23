@@ -700,11 +700,12 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
         # Walk through ancestry adding categories
         for item_category in item_category_hierarchy:
             # If category is not in woo, create a new category and refresh
-            if item_category not in woo_categories_dict:
+            # Woocommerce is case insensitive on category names
+            if item_category.lower() not in woo_categories_dict.keys():
                 post_request("products/categories", dict(name=item_category))
                 woo_categories_dict = get_woocommerce_all_product_categories()
 
-            item_data["categories"].append(dict(id=woo_categories_dict.get(item_category)))
+            item_data["categories"].append(dict(id=woo_categories_dict.get(item_category.lower())))
 
     if item.get("has_variants"):  # we are dealing a variable product
         item_data["type"] = "variable"

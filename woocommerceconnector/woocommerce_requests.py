@@ -308,7 +308,7 @@ def get_woocommerce_all_product_categories():
     response = get_request_request(
         "products/categories?per_page={0}".format(_per_page)
     )
-    woocommerce_product_categories.extend([(item.get("name"), item.get("id")) for item in response.json()])
+    woocommerce_product_categories.extend([(item.get("name").lower(), item.get("id")) for item in response.json()])
 
     for page_idx in range(1, int(response.headers.get("X-WP-TotalPages")) or 1):
         response = get_request_request(
@@ -316,6 +316,6 @@ def get_woocommerce_all_product_categories():
                 _per_page, page_idx + 1
             )
         )
-        woocommerce_product_categories.extend([(item.get("name"), item.get("id")) for item in response.json()])
+        woocommerce_product_categories.extend([(item.get("name").lower(), item.get("id")) for item in response.json()])
 
     return dict(woocommerce_product_categories)
