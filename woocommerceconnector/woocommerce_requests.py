@@ -37,7 +37,7 @@ def get_woocommerce_settings():
         )
 
 
-def get_request_request(path, settings=None):
+def get_request_request(path, settings=None, params=None):
     if not settings:
         settings = get_woocommerce_settings()
 
@@ -55,7 +55,9 @@ def get_request_request(path, settings=None):
         version="wc/v3",
         timeout=1000,
     )
-    r = wcapi.get(path)
+    if not params:
+        params = {}
+    r = wcapi.get(path, params=params)
 
     # r.raise_for_status()
     # manually raise for status to get more info from error (message details)
@@ -71,8 +73,8 @@ def get_request_request(path, settings=None):
     return r
 
 
-def get_request(path, settings=None):
-    return get_request_request(path, settings).json()
+def get_request(path, settings=None, params=None):
+    return get_request_request(path, settings, params).json()
 
 
 def post_request(path, data):
@@ -181,7 +183,7 @@ def get_filtering_condition():
     if woocommerce_settings.last_sync_datetime:
         last_sync_datetime = get_datetime(woocommerce_settings.last_sync_datetime)
 
-        return "modified_after={0}".format(last_sync_datetime.isoformat())
+        return dict(modified_after=last_sync_datetime.isoformat())
     return ""
 
 
@@ -192,9 +194,9 @@ def get_country():
 def get_woocommerce_items(ignore_filter_conditions=False):
     woocommerce_products = []
 
-    filter_condition = ""
+    filter_condition = {}
     if not ignore_filter_conditions:
-        filter_condition = get_filtering_condition()
+        filter_condition.update(get_filtering_condition())
         print("WooCommerce filter error {0}".format(filter_condition))
 
         if (
@@ -205,18 +207,21 @@ def get_woocommerce_items(ignore_filter_conditions=False):
             )
             == 1
         ):
-            filter_condition += "&status=publish"
+            filter_condition['status'] = "publish"
 
+    filter_condition["per_page"] = _per_page
     response = get_request_request(
-        "products?per_page={0}&{1}".format(_per_page, filter_condition)
+        "products", params=filter_condition
     )
     woocommerce_products.extend(response.json())
 
     for page_idx in range(1, int(response.headers.get("X-WP-TotalPages")) or 1):
+        filter_condition["page"] = page_idx + 1
         response = get_request_request(
-            "products?per_page={0}&page={1}&{2}".format(
-                _per_page, page_idx + 1, filter_condition
-            )
+            "products", params=filter_condition
+            #"products?per_page={0}&page={1}&{2}".format(
+            #    _per_page, page_idx + 1, filter_condition
+            #)
         )
         woocommerce_products.extend(response.json())
 
@@ -226,20 +231,25 @@ def get_woocommerce_items(ignore_filter_conditions=False):
 def get_woocommerce_item_variants(woocommerce_product_id):
     woocommerce_product_variants = []
 
-    filter_condition = ""
+    filter_condition = dict(per_page=_per_page)
 
-    response = get_request_request(
-        "products/{0}/variations?per_page={1}&{2}".format(
-            woocommerce_product_id, _per_page, filter_condition
-        )
+    response = get_request_request( 
+        f"products/{woocommerce_product_id}/variations",
+        params=filter_condition
+        #"products/{0}/variations?per_page={1}&{2}".format(
+        #    woocommerce_product_id, _per_page, filter_condition
+        #)
     )
     woocommerce_product_variants.extend(response.json())
 
     for page_idx in range(1, int(response.headers.get("X-WP-TotalPages")) or 1):
+        filter_condition["page"] = page_idx + 1
         response = get_request_request(
-            "products/{0}/variations?per_page={1}&page={2}&{3}".format(
-                woocommerce_product_id, _per_page, page_idx + 1, filter_condition
-            )
+            f"products/{woocommerce_product_id}/variations",
+            params=filter_condition
+            #"products/{0}/variations?per_page={1}&page={2}&{3}".format(
+            #    woocommerce_product_id, _per_page, page_idx + 1, filter_condition
+            #)
         )
         woocommerce_product_variants.extend(response.json())
 
@@ -260,17 +270,21 @@ def get_woocommerce_customer(woocommerce_customer_id):
 
 def get_woocommerce_orders(order_status):
     woocommerce_orders = []
+    filter_condition = dict(per_page=_per_page, status=order_status)
 
-    response = get_request_request(
-        "orders?per_page={0}&status={1}".format(_per_page, order_status)
+    response = get_request_request( 
+        f"orders", params=filter_condition
+        #"orders?per_page={0}&status={1}".format(_per_page, order_status)
     )
     woocommerce_orders.extend(response.json())
 
-    for page_idx in range(1, int(response.headers.get("X-WP-TotalPages")) or 1):
-        response = get_request_request(
-            "orders?per_page={0}&page={1}&status={2}".format(
-                _per_page, page_idx + 1, order_status
-            )
+    for page_idx in range(1, int(response.headers.get("X-WP-TotalPages")) or 1): 
+        filter_condition["page"] = page_idx + 1 
+        response = get_request_request( 
+            f"orders", params=filter_condition
+            #"orders?per_page={0}&page={1}&status={2}".format(
+            #    _per_page, page_idx + 1, order_status
+            #)
         )
         woocommerce_orders.extend(response.json())
 
@@ -284,17 +298,21 @@ def get_woocommerce_customers(ignore_filter_conditions=False):
 
     if not ignore_filter_conditions:
         filter_condition = get_filtering_condition()
+        filter_condition["per_page"] = _per_page
 
         response = get_request_request(
-            "customers?per_page={0}&{1}".format(_per_page, filter_condition)
+            #"customers?per_page={0}&{1}".format(_per_page, filter_condition)
+            f"customers", params=filter_condition
         )
         woocommerce_customers.extend(response.json())
 
         for page_idx in range(1, int(response.headers.get("X-WP-TotalPages")) or 1):
+            filter_condition["page"] = page_idx + 1 
             response = get_request_request(
-                "customers?per_page={0}&page={1}&{2}".format(
-                    _per_page, page_idx + 1, filter_condition
-                )
+                f"customers", params=filter_condition
+                #"customers?per_page={0}&page={1}&{2}".format(
+                #    _per_page, page_idx + 1, filter_condition
+                #)
             )
             woocommerce_customers.extend(response.json())
 
@@ -303,18 +321,21 @@ def get_woocommerce_customers(ignore_filter_conditions=False):
 
 def get_woocommerce_all_product_categories():
     woocommerce_product_categories = []
-    _per_page = 100
+    filter_condition = dict(per_page = 100)
 
-    response = get_request_request(
-        "products/categories?per_page={0}".format(_per_page)
+    response = get_request_request( 
+        f"products/categories", params=filter_condition
+        #"products/categories?per_page={0}".format(_per_page)
     )
     woocommerce_product_categories.extend([(item.get("name").lower(), item.get("id")) for item in response.json()])
 
     for page_idx in range(1, int(response.headers.get("X-WP-TotalPages")) or 1):
+        filter_condition["page"] = page_idx + 1 
         response = get_request_request(
-            "products?per_page={0}&page={1}".format(
-                _per_page, page_idx + 1
-            )
+            f"products/categories", params=filter_condition
+            #"products?per_page={0}&page={1}".format(
+            #    _per_page, page_idx + 1
+            #)
         )
         woocommerce_product_categories.extend([(item.get("name").lower(), item.get("id")) for item in response.json()])
 
