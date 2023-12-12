@@ -182,7 +182,6 @@ def get_filtering_condition():
     woocommerce_settings = get_woocommerce_settings()
     if woocommerce_settings.last_sync_datetime:
         last_sync_datetime = get_datetime(woocommerce_settings.last_sync_datetime)
-
         return dict(modified_after=last_sync_datetime.isoformat())
     return ""
 

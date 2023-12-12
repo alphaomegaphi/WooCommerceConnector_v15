@@ -582,14 +582,32 @@ def get_erpnext_items(price_list):
             woocommerce_settings.last_sync_datetime
         )
 
-    item_from_master = (
-        """select name, item_code, item_name, item_group,
-        description, woocommerce_description, has_variants, variant_of, stock_uom, image, woocommerce_product_id,
-        woocommerce_variant_id, sync_qty_with_woocommerce, weight_per_unit, weight_uom from tabItem
-        where sync_with_woocommerce=1 and (variant_of is null or variant_of = '')
-        and (disabled is null or disabled = 0)  %s """
-        % last_sync_condition
-    )
+    item_from_master =  f"""
+            SELECT name,
+                   item_code,
+                   item_name,
+                   item_group,
+                   description,
+                   woocommerce_description,
+                   has_variants,
+                   variant_of,
+                   stock_uom,
+                   image,
+                   woocommerce_product_id,
+                   woocommerce_variant_id,
+                   sync_qty_with_woocommerce,
+                   weight_per_unit,
+                   weight_uom
+            FROM tabItem
+            WHERE sync_with_woocommerce=1
+              AND (variant_of IS NULL
+                   OR variant_of = '')
+              AND (disabled IS NULL
+                   OR disabled = 0)
+                   {last_sync_condition}
+
+        """
+    
 
     erpnext_items.extend(frappe.db.sql(item_from_master, as_dict=1))
 
@@ -605,7 +623,7 @@ def get_erpnext_items(price_list):
             ("' ,'".join(template_items))
         )
 
-    item_from_item_price = """SELECT `tabItem`.`name`, 
+    item_from_item_price = f"""SELECT `tabItem`.`name`, 
                                      `tabItem`.`item_code`, 
                                      `tabItem`.`item_name`, 
                                      `tabItem`.`item_group`, 
@@ -621,13 +639,12 @@ def get_erpnext_items(price_list):
                                      `tabItem`.`weight_per_unit`, 
                                      `tabItem`.`weight_uom`
         FROM `tabItem`, `tabItem Price`
-        WHERE `tabItem Price`.`price_list` = '%s' 
+        WHERE `tabItem Price`.`price_list` = '{price_list}' 
           AND `tabItem`.`name` = `tabItem Price`.`item_code`
           AND `tabItem`.`sync_with_woocommerce` = 1 
-          AND (`tabItem`.`disabled` IS NULL OR `tabItem`.`disabled` = 0) %s""" % (
-        price_list,
-        item_price_condition,
-    )
+          AND (`tabItem`.`disabled` IS NULL OR `tabItem`.`disabled` = 0) 
+          {item_price_condition}
+          """
     frappe.log("{0}".format(item_from_item_price))
 
     updated_price_item_list = frappe.db.sql(item_from_item_price, as_dict=1)
@@ -698,11 +715,17 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
         # Get the item category + ancestry
         item_category_hierarchy = erpnext_categories_dict.get(item_category_name).split(",")
         # Walk through ancestry adding categories
-        for item_category in item_category_hierarchy:
+        for idx,item_category in enumerate(item_category_hierarchy):
+            # Plug in the item category parent if it's a child
+            if idx > 0:
+                parent_category_name = item_category_hierarchy[idx-1]
+                parent_category_id = woo_categories_dict.get(parent_category_name.lower())
+                
+
             # If category is not in woo, create a new category and refresh
             # Woocommerce is case insensitive on category names
             if item_category.lower() not in woo_categories_dict.keys():
-                post_request("products/categories", dict(name=item_category))
+                post_request("products/categories", dict(name=item_category, parent=parent_category_id)) if parent_category_id else post_request("products/categories", dict(name=item_category))
                 woo_categories_dict = get_woocommerce_all_product_categories()
 
             item_data["categories"].append(dict(id=woo_categories_dict.get(item_category.lower())))
