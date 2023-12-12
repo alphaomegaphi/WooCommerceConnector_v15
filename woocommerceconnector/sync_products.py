@@ -712,15 +712,25 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
     if item_category_name:
         # Create an empty holder of all item categories
         item_data["categories"] = []
-        # Get the item category + ancestry
+        # Get the item category + ancestry.
+        # Example of item_category_hierarchy => [products, proteins, beef, beef_fillet]
         item_category_hierarchy = erpnext_categories_dict.get(item_category_name).split(",")
         # Walk through ancestry adding categories
-        for idx,item_category in enumerate(item_category_hierarchy):
+        for idx,item_category in enumerate(item_category_hierarchy, 0):
             # Plug in the item category parent if it's a child
+            parent_category_id = None
             if idx > 0:
                 parent_category_name = item_category_hierarchy[idx-1]
                 parent_category_id = woo_categories_dict.get(parent_category_name.lower())
                 
+                make_woocommerce_log(
+                    title="WooCommerce categories parenting",
+                    status="",
+                    method="check parent category",
+                    message=f"Checking {idx=}, {item_category=}, {item_category_hierarchy=}, {parent_category_name=}, {parent_category_id=}, {woo_categories_dict=}",
+                    request_data=dict(erpnext_categories_dict=erpnext_categories_dict, woo_categories_dict=woo_categories_dict, item_category_name=item_category_name),
+                    exception=False,
+                )
 
             # If category is not in woo, create a new category and refresh
             # Woocommerce is case insensitive on category names
@@ -846,10 +856,12 @@ def sync_item_image(item):
         ["file_name", "file_url", "is_private", "content_hash", "docstatus"],
     )
     if extra_image_list:
+        host_name = frappe.local.conf.host_name or frappe.local.conf.hostname
         for idx, img_details in enumerate(extra_image_list, start=0):
             image_info["images"].append(
                 dict(
-                    src="https://" + cstr(frappe.local.site) + img_details[1],
+                    src= cstr(host_name) + img_details[1],
+                    #src= frappe.utils.get_url(f"/{img_details[1]}"),
                     position=idx,
                 )
             )
