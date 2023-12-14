@@ -183,7 +183,7 @@ def get_filtering_condition():
     if woocommerce_settings.last_sync_datetime:
         last_sync_datetime = get_datetime(woocommerce_settings.last_sync_datetime)
         return dict(modified_after=last_sync_datetime.isoformat())
-    return ""
+    return {}
 
 
 def get_country():
@@ -293,7 +293,7 @@ def get_woocommerce_orders(order_status):
 def get_woocommerce_customers(ignore_filter_conditions=False):
     woocommerce_customers = []
 
-    filter_condition = ""
+    filter_condition = dict()
 
     if not ignore_filter_conditions:
         filter_condition = get_filtering_condition()

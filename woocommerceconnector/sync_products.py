@@ -854,9 +854,11 @@ def sync_item_image(item):
         "File",
         {"attached_to_name": item.name},
         ["file_name", "file_url", "is_private", "content_hash", "docstatus"],
+        # Order by the filenames so that item 0.jpg will always come before 1.jpg
+        order_by='file_name asc',
     )
     if extra_image_list:
-        host_name = frappe.local.conf.host_name or frappe.local.conf.hostname
+        host_name = frappe.local.conf.host_name or frappe.local.conf.hostname or frappe.local.site
         for idx, img_details in enumerate(extra_image_list, start=0):
             image_info["images"].append(
                 dict(
