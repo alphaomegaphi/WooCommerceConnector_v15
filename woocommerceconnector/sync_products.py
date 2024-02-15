@@ -662,7 +662,7 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
     variant_item_name_list = []
     variant_list = []
     item_data = {
-        "name": item.get("item_code"),
+        "name": item.get("item_name"),
         "description": item.get("woocommerce_description")
         or item.get("web_long_description")
         or item.get("description"),
@@ -671,6 +671,17 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
         or item.get("woocommerce_description"),
     }
     item_data.update(get_price_and_stock_details(item, warehouse, price_list))
+
+    make_woocommerce_log(
+        title="WooCommerce sync_item_with_woocommerce",
+        status="",
+        method="sync_item_with_woocommerce",
+        message=f"{item=}, {price_list=}, {warehouse=}, {price_list=}",
+        request_data=item_data,
+        exception=False,
+    )
+
+
 
     # Get list of categories from erpnext with parent hierarchy ex:
     # {'All Item Groups': '', 'Basins': 'Bathrooms,Basins', 'Bathroom Accessories': 'Bathrooms,Bathroom Accessories'}

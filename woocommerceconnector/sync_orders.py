@@ -34,10 +34,13 @@ def sync_woocommerce_orders():
                         make_woocommerce_log(status="Error", method="sync_woocommerce_orders", message=frappe.get_traceback(),
                             request_data=woocommerce_order, exception=True)
                     except Exception as e:
+                        make_woocommerce_log(title=str(e), status="Error", method="sync_woocommerce_orders", message=frappe.get_traceback(),
+                            request_data=woocommerce_order, exception=True)
+
                         if e.args and e.args[0] and e.args[0].decode("utf-8").startswith("402"):
                             raise e
                         else:
-                            make_woocommerce_log(title=e.message, status="Error", method="sync_woocommerce_orders", message=frappe.get_traceback(),
+                            make_woocommerce_log(title=str(e), status="Error", method="sync_woocommerce_orders", message=frappe.get_traceback(),
                                 request_data=woocommerce_order, exception=True)
             # close this order as synced
             close_synced_woocommerce_order(woocommerce_order.get("id"))
