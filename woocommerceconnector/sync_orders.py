@@ -42,8 +42,12 @@ def sync_woocommerce_orders():
                         else:
                             make_woocommerce_log(title=str(e), status="Error", method="sync_woocommerce_orders", message=frappe.get_traceback(),
                                 request_data=woocommerce_order, exception=True)
-            # close this order as synced
-            close_synced_woocommerce_order(woocommerce_order.get("id"))
+            else:
+                # Update WooCommerce order status only if corresponding Sales Order status is "Completed"
+                so_doc = frappe.get_doc("Sales Order", so_name)
+                if so_doc.docstatus == 1 and so_doc.status == "Completed":
+                    close_synced_woocommerce_order(woocommerce_order.get("id"))  # This line updates WooCommerce order status to "Completed"
+
                 
 def get_woocommerce_order_status_for_import():
     status_list = []
