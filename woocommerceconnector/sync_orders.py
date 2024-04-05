@@ -414,17 +414,13 @@ def update_taxes_with_shipping_lines(taxes, shipping_lines, woocommerce_settings
 
 
 def get_shipping_account_head(shipping):
-        #shipping_title = shipping.get("method_title").encode("utf-8")
+        shipping_title = shipping.get("method_title").encode("utf-8")
 
-        #shipping_account =  frappe.db.get_value("woocommerce Tax Account", \
-                #{"parent": "WooCommerce Config", "woocommerce_tax": shipping_title}, "tax_account")
+        shipping_account =  frappe.db.get_value("woocommerce Tax Account", \
+                {"parent": "WooCommerce Config", "woocommerce_tax": shipping_title}, "tax_account")
 
                 #This change ensures that the shipping title is properly escaped and decoded before 
                 #being used in the SQL query, which should prevent any syntax errors related to spaces in the string  
-         shipping_title = frappe.db.escape_string(shipping.get("method_title"))
-         shipping_account = frappe.db.get_value("woocommerce Tax Account", 
-                {"parent": "WooCommerce Config", "woocommerce_tax": shipping_title.decode("utf-8")}, "tax_account")
-
         if not shipping_account:
                 frappe.throw("Tax Account not specified for woocommerce shipping method  {0}".format(shipping.get("method_title")))
 
