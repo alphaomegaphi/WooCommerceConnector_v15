@@ -725,34 +725,7 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
         item_data["categories"] = []
         # Get the item category + ancestry.
         # Example of item_category_hierarchy => [products, proteins, beef, beef_fillet]
-        #item_category_hierarchy = erpnext_categories_dict.get(item_category_name).split(",")
-        if item_category_name:
-            item_data["categories"] = []
-            item_category_hierarchy = erpnext_categories_dict.get(item_category_name)
-            if item_category_hierarchy is None:
-                 # If the category is not found, assign it to a default category
-                 default_category = "Uncategorized"
-                 item_category_hierarchy = erpnext_categories_dict.get(default_category)
-                 if item_category_hierarchy is None:
-            # If the default category is not found, handle it gracefully
-            make_woocommerce_log(
-                title="Default category not found",
-                status="Error",
-                method="sync_item_with_woocommerce",
-                message=f"Default category '{default_category}' not found in erpnext_categories_dict.",
-                request_data=dict(erpnext_categories_dict=erpnext_categories_dict, item_category_name=item_category_name),
-                exception=True,
-            )
-            # Handle error or assign a different default category if needed
-        else:
-        # Assign the default category hierarchy
-            item_category_hierarchy = item_category_hierarchy.split(",")
-    else:
-        # Get the item category + ancestry.
-        # Example of item_category_hierarchy => [products, proteins, beef, beef_fillet]
-        item_category_hierarchy = item_category_hierarchy.split(",")
-
-
+        item_category_hierarchy = erpnext_categories_dict.get(item_category_name).split(",")
         # Walk through ancestry adding categories
         for idx,item_category in enumerate(item_category_hierarchy, 0):
             # Plug in the item category parent if it's a child
